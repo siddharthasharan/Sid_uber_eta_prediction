@@ -1,29 +1,41 @@
 from preprocessing import *
+import pandas as pd
+import pickle
+import xgboost as xgb
+import os
+os.makedirs("model", exist_ok=True)
 
-df_train = pd.read_csv("C:/Users/sisharan/OneDrive - Microsoft/Documents/Maven_course/Uber_ETA_prediction/data/raw_data.csv")  # Load Data
+# Load data
+df_train = pd.read_csv("data/raw_data.csv")
 
+# Preprocess
 dp = DataProcessing()
-dp.cleaning_steps(df_train)                                # Perform Cleaning
-dp.extract_label_value(df_train)                           # Extract Label Value
-dp.perform_feature_engineering(df_train)                   # Perform feature engineering
+dp.cleaning_steps(df_train)
+dp.extract_label_value(df_train)
+dp.perform_feature_engineering(df_train)
 
-# Split features & label
-X = df_train.drop('Time_taken(min)', axis=1)               # Features
-y = df_train['Time_taken(min)']                            # Target variable
+# Features and label
+X = df_train.drop('Time_taken(min)', axis=1)
+y = df_train['Time_taken(min)']
 
-label_encoders = dp.label_encoding(X)                      # Label Encoding
-X_train, X_test, y_train, y_test = dp.data_split(X, y)     # Test Train Split
-X_train, X_test, scaler = dp.standardize(X_train, X_test)  # Standardization
+# Label encoding
+label_encoders = dp.label_encoding(X)
+feature_columns = X.columns.tolist()  # Save column order for inference
 
-# Build Model
+# Train/test split and scaling
+X_train, X_test, y_train, y_test = dp.data_split(X, y)
+X_train, X_test, scaler = dp.standardize(X_train, X_test)
+
+# Build model
 model = xgb.XGBRegressor(n_estimators=20, max_depth=9)
 model.fit(X_train, y_train)
 
-# Evaluate Model
+# Evaluate
 y_pred = model.predict(X_test)
 dp.evaluate_model(y_test, y_pred)
 
-# Create model.pkl and Save Model
-with open("C:/Users/sisharan/OneDrive - Microsoft/Documents/Maven_course/Uber_ETA_prediction/data/model/model.pickle", 'wb') as f:
-    pickle.dump((model, label_encoders, scaler), f)
-print("Model pickle saved to model folder")
+# Save model, encoders, scaler, and feature column order
+with open("model/model.pickle", 'wb') as f:
+    pickle.dump((model, label_encoders, scaler, feature_columns), f)
+
+print("✅ Model pickle saved to model folder")
