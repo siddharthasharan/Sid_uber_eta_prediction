@@ -226,11 +226,14 @@ class DataProcessing:
         self.update_datatype(df)
         self.convert_nan(df)
         self.handle_null_values(df)
+        return df 
+
 
     def perform_feature_engineering(self, df):
         self.extract_date_features(df)
         self.calculate_time_diff(df)
         self.calculate_distance(df)
+        return df
 
     def evaluate_model(self, y_test, y_pred):
         mae = mean_absolute_error(y_test, y_pred)
